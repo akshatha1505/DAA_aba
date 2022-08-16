@@ -1,0 +1,88 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <stdbool.h>
+
+#define MAX_L 500002
+
+static int cvt(int c)
+{
+	switch (c) {
+	case 'A':
+		return 0;
+	case 'T':
+		return 1;
+	case 'C':
+		return 2;
+	case 'G':
+		return 3;
+	}
+	abort();
+}
+
+static bool check(int cnts[][MAX_L + 1], int n, int i, int l)
+{
+	bool ok = 1;
+	int sum = 0;
+	for (int j = 0; j < 4; j++) {
+		int diff = n/4 - (cnts[j][n] - (cnts[j][i + l] - cnts[j][i]));
+		ok &= diff >= 0;
+		sum += diff;
+	}
+	return ok && sum == l;
+}
+
+static int subst(char s[MAX_L], int n)
+{
+	int res = INT_MAX;
+	static int cnts[4][MAX_L + 1];
+	for (int i = 1; i <= n; i++) {
+		for (int j = 0; j < 4; j++) {
+			cnts[j][i] = cnts[j][i-1];
+		}
+		cnts[s[i-1]][i] += 1;
+	}
+
+	for (int i = 0; i < n; i++) {
+		int len = 1;
+		int l, r;
+		while (i + len <= n) {
+			if (check(cnts, n, i, len))
+				break;
+			len *= 2;
+		}
+		if (i + len > n) {
+			len = n - i;
+			if (!check(cnts, n, i, len))
+				continue;
+		}
+		l = len / 2;
+		r = len;
+		while (l < r) {
+			int m = l + (r - l)/2;
+			if (check(cnts, n, i, m)) {
+				r = m;
+				len = r;
+			} else {
+				l = m + 1;
+			}
+		}
+		if (len < res)
+			res = len;
+	}
+	return res;
+}
+
+int main()
+{
+	int n;
+	static char s[MAX_L];
+	fgets(s, MAX_L, stdin);
+	sscanf(s, "%d", &n);
+	fgets(s, MAX_L, stdin);
+	for (int i = 0; i < n; i++) {
+		s[i] = cvt(s[i]);
+	}
+	printf("%d", subst(s, n));
+	return 0;
+}
